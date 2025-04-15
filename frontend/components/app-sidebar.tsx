@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { IconGmail } from "@/public/gmail";
 import { LogosWhatsappIcon } from "@/public/whatsapp";
 import { OutlookIcon } from "@/public/outlook";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Link from "next/link";
 
@@ -36,7 +36,7 @@ const data = {
 	navMain: [
 		{
 			title: "Inbox",
-			url: "#",
+			url: "/inbox/unifiedinbox",
 			icon: Inbox,
 			isActive: true,
 		},
@@ -51,7 +51,9 @@ const data = {
 			date: "09:34 AM",
 			teaser: "Hi team, just a reminder about our meeting tomorrow at 10 AM.\nPlease come prepared with your project updates.",
 			timestamp: "Yesterday",
+			status: "offline",
 			platform: "Gmail",
+			newMessages: [],
 		},
 		{
 			id: "2",
@@ -62,7 +64,9 @@ const data = {
 			date: "Yesterday",
 			teaser: "Thanks for the update. The progress looks great so far.\nLet's schedule a call to discuss the next steps.",
 			timestamp: "Yesterday",
+			status: "offline",
 			platform: "WhatsApp",
+			newMessages: [],
 		},
 		{
 			id: "3",
@@ -73,62 +77,72 @@ const data = {
 			date: "2 days ago",
 			teaser: "Hey everyone! I'm thinking of organizing a team outing this weekend.\nWould you be interested in a hiking trip or a beach day?",
 			timestamp: "Yesterday",
+			status: "offline",
 			platform: "Gmail",
+			newMessages: [],
 		},
 		{
 			id: "4",
 			typePlatform: "whatsapp",
 			name: "Emily Davis",
 			email: "emilydavis@example.com",
-			subject: "Re: Question about Budget",
+			subject: "",
 			date: "2 days ago",
 			teaser: "I've reviewed the budget numbers you sent over.\nCan we set up a quick call to discuss some potential adjustments?",
 			timestamp: "Yesterday",
 			platform: "WhatsApp",
+			status: "offline",
+			newMessages: [],
 		},
 		{
 			id: "5",
 			typePlatform: "whatsapp",
 			name: "Michael Wilson",
 			email: "michaelwilson@example.com",
-			subject: "Important Announcement",
+			subject: "",
 			date: "1 week ago",
 			teaser: "Please join us for an all-hands meeting this Friday at 3 PM.\nWe have some exciting news to share about the company's future.",
 			timestamp: "Yesterday",
 			platform: "WhatsApp",
+			status: "online",
+			newMessages: [],
 		},
 		{
 			id: "6",
 			typePlatform: "whatsapp",
 			name: "Sarah Brown",
 			email: "sarahbrown@example.com",
-			subject: "Re: Feedback on Proposal",
+			subject: "",
 			date: "1 week ago",
 			teaser: "Thank you for sending over the proposal. I've reviewed it and have some thoughts.\nCould we schedule a meeting to discuss my feedback in detail?",
 			timestamp: "Yesterday",
 			platform: "WhatsApp",
+			newMessages: [],
 		},
 		{
 			id: "7",
 			typePlatform: "whatsapp",
 			name: "David Lee",
 			email: "davidlee@example.com",
-			subject: "New Project Idea",
+			subject: "",
 			date: "1 week ago",
 			teaser: "I've been brainstorming and came up with an interesting project concept.\nDo you have time this week to discuss its potential impact and feasibility?",
 			timestamp: "Yesterday",
 			platform: "WhatsApp",
+			newMessages: [],
 		},
 		{
 			id: "8",
 			typePlatform: "whatsapp",
 			name: "Olivia Wilson",
 			email: "oliviawilson@example.com",
-			subject: "Vacation Plans",
+			subject: "",
 			date: "1 week ago",
 			teaser: "Just a heads up that I'll be taking a two-week vacation next month.\nI'll make sure all my projects are up to date before I leave.",
 			timestamp: "Yesterday",
 			platform: "WhatsApp",
+			status: "online",
+			newMessages: [],
 		},
 		{
 			id: "9",
@@ -140,6 +154,7 @@ const data = {
 			teaser: "I've completed the registration for the upcoming tech conference.\nLet me know if you need any additional information from my end.",
 			timestamp: "Yesterday",
 			platform: "WhatsApp",
+			newMessages: [],
 		},
 		{
 			id: "10",
@@ -151,6 +166,15 @@ const data = {
 			teaser: "To celebrate our recent project success, I'd like to organize a team dinner.\nAre you available next Friday evening? Please let me know your preferences.",
 			timestamp: "Yesterday",
 			platform: "WhatsApp",
+			status: "online",
+			newMessages: [
+				{
+					id: "1",
+					content: "Hey there! How are you doing?",
+					sender: "other",
+					timestamp: new Date(Date.now() - 1000 * 60 * 5),
+				},
+			],
 		},
 	],
 };
@@ -161,6 +185,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const [activeItem, setActiveItem] = React.useState(data.navMain[0]);
 	const [mails, setMails] = React.useState(data.mails);
 	const [navMains, setNavMains] = React.useState(data.navMain);
+	const [searchSidebar, setSearchSideBar] = React.useState("");
+	const activeMessage = useSearchParams().get("id");
+
 	const { setOpen } = useSidebar();
 	const router = useRouter();
 
@@ -187,6 +214,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 		];
 		setNavMains((nav) => [...nav, ...navsIntegrated]);
 	}, []);
+
+	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setSearchSideBar(e.target.value);
+		const search = e.target.value.toLowerCase();
+		setMails(data.mails.filter((mail) => mail.name.toLowerCase().includes(search) || mail.subject.toLowerCase().includes(search)));
+	};
 
 	return (
 		<Sidebar collapsible="icon" className="overflow-hidden *:data-[sidebar=sidebar]:flex-row" {...props}>
@@ -225,11 +258,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 											onClick={() => {
 												setActiveItem(item);
 												const mail = data.mails.sort(() => Math.random() - 0.5);
-												setMails(mail.filter((mail) => mail.platform === item.title));
-												setOpen(true);
+												if (item.title !== "Inbox") {
+													setMails(mail.filter((mail) => mail.platform === item.title));
+												} else {
+													setMails(mail);
+												}
 												if (item.url && item.url !== "#") {
 													router.push(item.url);
 												}
+												setOpen(true);
 											}}
 											isActive={activeItem?.title === item.title}
 											className="px-2.5 md:px-2">
@@ -258,30 +295,45 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							<Switch className="shadow-none" />
 						</Label>
 					</div>
-					<SidebarInput placeholder="Type to search..." />
+					<SidebarInput placeholder="Type to search..." onChange={handleSearch} value={searchSidebar} />
 				</SidebarHeader>
 				<SidebarContent>
 					<SidebarGroup className="px-0">
 						<SidebarGroupContent>
 							{mails.map((item) => (
 								<Link
-									href={`/inbox/${item.typePlatform.toLowerCase()}/`}
+									href={`/inbox/${item.typePlatform.toLowerCase()}?id=${item.id}`}
 									key={item.id}
-									className="flex flex-row items-start gap-2 whitespace-nowrap border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-									<Avatar className="h-8 w-8 flex-shrink-0 rounded-4xl">
-										<AvatarImage src={"https://github.com/shadcn.png"} alt={item.name} />
-										<AvatarFallback>{item.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-									</Avatar>
+									className={`flex flex-row items-start gap-2 whitespace-nowrap border-b p-4 py-4 text-sm leading-tight last:border-b-0 
+  hover:bg-sidebar-accent hover:text-sidebar-accent-foreground 
+  transition-colors duration-300
+  ${activeMessage === item.id ? "bg-sidebar-accent-foreground/10" : ""}`}>
+									<div
+										className={`avatar ${
+											item.status === "online" && item.typePlatform === "whatsapp"
+												? "avatar-online before:outline-emerald-500 before:outline-1 "
+												: ""
+										}`}>
+										<Avatar className="h-12 w-12 flex-shrink-0 rounded-4xl">
+											<AvatarImage src={"https://github.com/shadcn.png"} alt={item.name} />
+											<AvatarFallback>{item.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+										</Avatar>
+									</div>
 
-									<div className="flex flex-col min-w-0 flex-1">
+									<div className="flex flex-col min-w-0 flex-1 gap-1">
 										<div className="flex flex-row items-center justify-between">
-											<span className="font-medium truncate">{item.typePlatform === "email" ? item.subject : item.name}</span>
+											<span className="font-semibold text-sm truncate ">{item.typePlatform === "email" ? item.subject : item.name}</span>
 											<span className="text-xs text-muted-foreground shrink-0">{item.timestamp}</span>
 										</div>
-
-										<span className="text-xs text-muted-foreground truncate line-clamp-1 w-[230px] whitespace-break-spaces">
-											{item.teaser}
-										</span>
+										<div className="flex flex-1 flex-row justify-between items-center">
+											<span
+												className={`text-xs ${
+													item.newMessages.length > 0 ? "font-semibold" : "text-muted-foreground"
+												} truncate text-sm  line-clamp-1 w-[140px] whitespace-break-spaces`}>
+												{item.teaser}
+											</span>
+											<div>{item.newMessages.length > 0 && <div className="rounded-full bg-emerald-500 w-2 h-2 flex-1"></div>}</div>
+										</div>
 									</div>
 								</Link>
 							))}

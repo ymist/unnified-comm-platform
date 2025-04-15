@@ -1,6 +1,8 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap");
 
+@import "tailwindcss";
+@plugin "daisyui";
+@import "tw-animate-css";
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -110,6 +112,10 @@
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.488 0.243 264.376);
+}
+
+* {
+	font-family: "Instrument Sans", sans-serif;
 }
 
 @layer base {
